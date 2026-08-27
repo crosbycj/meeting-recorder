@@ -1,0 +1,25 @@
+# Meeting Recorder Architecture Decisions
+
+- Deployment target: macOS 14.2+
+- Menu bar implementation: AppKit using `NSStatusItem` + `NSMenu` (not SwiftUI `MenuBarExtra`)
+- Language and dependencies: Swift with minimal third-party dependencies
+- Local storage root: `~/MeetingRecorder/recordings/`
+- App mode: menu bar-only (`LSUIElement = YES`), no Dock icon, no main window
+- Recording folder structure: `~/MeetingRecorder/recordings/YYYY-MM-DD_slug/`
+- System audio capture: ScreenCaptureKit (`SCStream`) in audio-only mode
+- Microphone capture: `AVAudioEngine` input tap writing to local temp audio file
+- Recording pipeline: capture system + mic into separate temp files, then post-mix into one M4A
+- Permissions behavior: gracefully degrade if one audio source is unavailable
+- App Sandbox: disabled for ScreenCaptureKit compatibility
+- Transcription: FluidAudio (SPM) — Parakeet TDT v3 via CoreML/ANE
+- AsrManager.transcribe(url:) handles audio format conversion internally
+- Model auto-downloads from HuggingFace on first use (~600MB, cached after)
+- Batch transcription only (after recording stops, not streaming)
+- transcript.txt: metadata header + plain text body
+- Summary generation: Claude Haiku 4.5 (claude-haiku-4-5) via Anthropic Messages API
+- API key stored in macOS Keychain using Security framework (service: "MeetingRecorder")
+- Summary generation is optional — failure doesn't affect recording or transcription
+- Pipeline order: record → mix → transcribe → summarize
+- Startup reconciliation: recordings stuck in pending/transcribing/generating are automatically re-enqueued on launch after the transcription model is ready
+- RecordingStorage is an actor; recording file I/O and metadata updates are serialized
+- Stop recording flow releases UI immediately after stop+mix; transcription runs asynchronously in the background

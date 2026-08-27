@@ -1,0 +1,22 @@
+.DS_Store
+
+# Xcode user state and build products
+DerivedData/
+build/
+dist/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+
+# Swift Package Manager working data
+.build/
+.swiftpm/
+
+# Local configuration and signing material
+.env
+.env.*
+*.cer
+*.p12
+*.provisionprofile
+*.mobileprovision
